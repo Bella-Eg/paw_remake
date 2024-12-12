@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Animal Management</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav>
+        <ul>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="admin.html">Animal Management</a></li>
+            <li><a href="reports.html">Reports</a></li>
+            <li><a href="logout.html">Logout</a></li>
+        </ul>
+    </nav>
+
+    <h1>Animal Management Dashboard</h1>
+    <div id="animal-container"></div>
+
+    <!-- Modal for Editing Animal Information -->
+    <div id="edit-modal" style="display:none;">
+        <h2>Edit Animal</h2>
+        <form id="edit-form">
+            <input type="hidden" id="edit-id" name="id">
+            <label for="name">Name:</label>
+            <input type="text" id="edit-name" name="name"><br>
+            <label for="age">Age:</label>
+            <input type="number" id="edit-age" name="age"><br>
+            <label for="breed">Breed:</label>
+            <input type="text" id="edit-breed" name="breed"><br>
+            <label for="weight">Weight:</label>
+            <input type="number" step="0.1" id="edit-weight" name="weight"><br>
+            <label for="height">Height:</label>
+            <input type="number" step="0.1" id="edit-height" name="height"><br>
+            <label for="description">Description:</label>
+            <textarea id="edit-description" name="description"></textarea><br>
+            <button type="button" onclick="updateAnimalInfo()">Save</button>
+            <button type="button" onclick="closeModal()">Cancel</button>
+        </form>
+    </div>
+
+    <script>
+        const API_URL = "http://localhost:3000/api/animals";
+
+        // Fetch all animals from the server
+        async function fetchAnimals() {
+            const response = await fetch(API_URL);
+            const animals = await response.json();
+            const container = document.getElementById("animal-container");
+            container.innerHTML = "";
+            animals.forEach(animal => {
+                const animalDiv = document.createElement("div");
+                animalDiv.innerHTML = `
+                    <img src="${animal.photo_link}" alt="${animal.name}" onclick="openModal(${animal.id})" style="cursor: pointer; width: 150px; height: 150px;">
+                    <p>${animal.name}</p>
+                `;
+                container.appendChild(animalDiv);
+            });
+        }
+
+        // Open modal for editing animal information
+        async function openModal(id) {
+            const response = await fetch(`${API_URL}/${id}`);
+            const animal = await response.json();
+
+            document.getElementById("edit-id").value = animal.id;
+            document.getElementById("edit-name").value = animal.name;
+            document.getElementById("edit-age").value = animal.age;
+            document.getElementById("edit-breed").value = animal.breed;
+            document.getElementById("edit-weight").value = animal.weight;
+            document.getElementById("edit-height").value = animal.height;
+            document.getElementById("edit-description").value = animal.description;
+
+            document.getElementById("edit-modal").style.display = "block";
+        }
+
+        // Close the modal
+        function closeModal() {
+            document.getElementById("edit-modal").style.display = "none";
+        }
+
+        // Update animal information via API
+        async function updateAnimalInfo() {
+            const id = document.getElementById("edit-id").value;
+            const updatedAnimal = {
+                name: document.getElementById("edit-name").value,
+                age: parseInt(document.getElementById("edit-age").value),
+                breed: document.getElementById("edit-breed").value,
+                weight: parseFloat(document.getElementById("edit-weight").value),
+                height: parseFloat(document.getElementById("edit-height").value),
+                description: document.getElementById("edit-description").value,
+            };
+
+            await fetch(`${API_URL}/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(updatedAnimal),
+            });
+
+            closeModal();
+            fetchAnimals();
+        }
+
+        // Fetch animals on page load
+        fetchAnimals();
+    </script>
+</body>
+</html>
